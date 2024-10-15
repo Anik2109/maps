@@ -27,8 +27,8 @@ function Navbar() {
           const result = await dispatch(geocodeLocation(input));
           if (result.meta.requestStatus === 'fulfilled') {
             const { lat, lon } = result.payload;
-            dispatch(setMapCenter({ coordinates: { lat, lon } }));
-            dispatch(setZoomLevel({ zoom: 13 })); 
+            dispatch(setMapCenter({ coordinates: { lat, lon } })); 
+            dispatch(setZoomLevel({ zoom: 11 }));  
           }
         } catch (error) {
           console.error("Error fetching location:", error);
@@ -37,6 +37,7 @@ function Navbar() {
         console.log("Enter Pressed", input);
       }
     };
+    
 
     return (
         <div className="flex flex-col items-center"> 

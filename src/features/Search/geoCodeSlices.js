@@ -1,12 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
 
 const initialState = {
     location: null,
     coordinates: { lat: 30.3564, lon: 76.3647 },
     zoom: 9,
-    status:'idle',
-    error: null, 
+    status: 'idle',
+    error: null,
 };
 
 export const geocodeLocation = createAsyncThunk(
@@ -17,7 +16,7 @@ export const geocodeLocation = createAsyncThunk(
 
         if (data && data.length > 0) {
             const { lat, lon, display_name } = data[0];
-            return { lat: parseFloat(lat), lon: parseFloat(lon), display_name }; // Return the first geocoded result
+            return { lat: parseFloat(lat), lon: parseFloat(lon), display_name };
         } else {
             throw new Error('Location not found');
         }
@@ -34,29 +33,35 @@ const geocodeSlice = createSlice({
         setZoomLevel: (state, action) => {
             state.zoom = action.payload.zoom;
         },
+        setError: (state, action) => {
+            state.error = action.payload.error;
+            state.status = 'failed';
+        },
+        resetStatus: (state) => {
+            state.status = 'idle';
+        }
     },
     extraReducers: (builder) => {
         builder
             .addCase(geocodeLocation.pending, (state) => {
-                state.status = 'loading'; // Set status to loading while the request is in progress
-                state.error = null;       // Clear previous errors
+                state.status = 'loading';
+                state.error = null;
             })
             .addCase(geocodeLocation.fulfilled, (state, action) => {
-                console.log("Geocode successful:", action.payload);
-                state.status = 'succeeded';         // Mark request as successful
-                state.coordinates = {               // Update the coordinates to the geocoded result
+                state.status = 'succeeded';
+                state.coordinates = {
                     lat: parseFloat(action.payload.lat),
                     lon: parseFloat(action.payload.lon),
                 };
-                state.location = action.payload.display_name; // Optionally store the location name
-                state.zoom = 13;  // Set a default zoom level after a successful geocoding
+                state.location = action.payload.display_name;
+                state.zoom = 13;
             })
             .addCase(geocodeLocation.rejected, (state, action) => {
-                state.status = 'failed';          // Mark request as failed
-                state.error = action.error.message; // Store the error message
+                state.status = 'failed';
+                state.error = action.error.message;
             });
     },
 });
-export const { setMapCenter, setZoomLevel } = geocodeSlice.actions;
-export default geocodeSlice.reducer;
 
+export const { setMapCenter, setZoomLevel, resetStatus, setError } = geocodeSlice.actions;
+export default geocodeSlice.reducer;

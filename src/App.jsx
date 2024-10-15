@@ -1,17 +1,15 @@
-import { useState } from 'react'
-import { Map,Navbar } from '../src/components/index'
-
-
+import { useState } from 'react';
+import { Navbar, Map } from '../src/components/index';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(0);
 
   return (
-    <>
-      <Navbar/>
+    <div className="flex flex-col h-screen">
+      <Navbar />
       <Map />
-    </>
-  )
+    </div>
+  );
 }
 
-export default App
+export default App;
