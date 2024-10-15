@@ -1,21 +1,58 @@
-import React from "react";
+import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch,faMicrophone } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faMicrophone } from '@fortawesome/free-solid-svg-icons';
+import { useDispatch, useSelector } from 'react-redux';
+import { setSearchQuery } from '../../features/Search/searchSlices';
+import { geocodeLocation } from '../../features/Search/geoCodeSlices';
+import { setMapCenter, setZoomLevel } from '../../features/Search/geoCodeSlices';
+
 
 
 function Navbar() {
+    const [input, setInput] = useState('');
+    const dispatch = useDispatch();
+    const { location, loading, error } = useSelector((state) => state.geocode);
+
+    const Inputchange= ((e)=>{
+      
+      setInput(e.target.value);
+
+    })
+
+    const handleKeyPress = async (e) => {
+      if (e.key === 'Enter') {
+        dispatch(setSearchQuery(input)); 
+    
+        try {
+          const result = await dispatch(geocodeLocation(input));
+          if (result.meta.requestStatus === 'fulfilled') {
+            const { lat, lon } = result.payload;
+            dispatch(setMapCenter({ coordinates: { lat, lon } }));
+            dispatch(setZoomLevel({ zoom: 13 })); 
+          }
+        } catch (error) {
+          console.error("Error fetching location:", error);
+        }
+    
+        console.log("Enter Pressed", input);
+      }
+    };
+
     return (
         <div className="flex flex-col items-center"> 
           <div className="flex flex-col md:flex-row items-center w-full justify-between mb-2 mt-2 px-4">
             
           <div className="relative w-full max-w-lg mb-4 md:mb-0">
-              <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+              <button className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" >
                 <FontAwesomeIcon icon={faSearch} />
-              </span>
+              </button>
               <input
                 type="text"
                 className="w-full p-1.5 pl-10 pr-10 border-2 border-gray-300 rounded-full outline-none"
                 placeholder="Search..."
+                value={input}
+                onChange={Inputchange}
+                onKeyDown={handleKeyPress}
               />
               <button className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
                 <FontAwesomeIcon icon={faMicrophone} />

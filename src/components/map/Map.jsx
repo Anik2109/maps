@@ -1,31 +1,69 @@
 import React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect,useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup,LayersControl,ZoomControl } from 'react-leaflet';
 import CustomControl from './featurediv';
+import { useSelector,useDispatch } from 'react-redux';
+import { setMapCenter, setZoomLevel } from '../../features/Search/geoCodeSlices';
 
-const { BaseLayer, Overlay } = LayersControl;
+const { BaseLayer} = LayersControl;
 
 const Map = () => {
     const [userLocation, setUserLocation] = useState([30.3564, 76.3647]);
+    const coordinates = useSelector((state) => state.geocode.coordinates);
+    const mapRef = useRef(null);
+    const dispatch = useDispatch();
+    const zoom = useSelector((state) => state.geocode.zoom);
+
+    const handleMapMove = (event) => {
+        const map = event.target;
+        const center = map.getCenter();
+        const zoom = map.getZoom();
+
+        // Dispatch actions to update the center and zoom level in the Redux store
+        dispatch(setMapCenter({ coordinates: { lat: center.lat, lon: center.lng } }));
+        dispatch(setZoomLevel({ zoom }));
+    };
+
+    // useEffect(() => {
+    //     if (navigator.geolocation) {
+    //         navigator.geolocation.getCurrentPosition(
+    //             (position) => {
+    //                 const userCoords = [position.coords.latitude, position.coords.longitude];
+    //                 setUserLocation(userCoords);
+    //                 dispatch(setMapCenter({ coordinates: { lat: userCoords[0], lon: userCoords[1] } }));
+    //             },
+    //             (error) => {
+    //                 console.error("Error getting user's location:", error);
+    //             }
+    //         );
+    //     } else {
+    //         console.error("Geolocation is not supported by this browser");
+    //     }
+    // }, [dispatch]);
 
     useEffect(() => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((position) => {
-                setUserLocation([position.coords.latitude, position.coords.longitude]);
-            },
-            (error) => {
-                console.log("ERROR",error);
-            });
+        console.log("MAP: ",coordinates.lat,coordinates.lon )
+        if (mapRef.current && coordinates && coordinates.lat && coordinates.lon) {
+            console.log("Setting map view to:", coordinates); // Log the coordinates being set
+            mapRef.current.setView([coordinates.lat, coordinates.lon], zoom);
         }
-        else{
-            console.log("Geo Location is not supported by this browser");
-        }
-    }, []);
-  
+    }, [coordinates, zoom]);
+
+    if (!coordinates || !coordinates.lat || !coordinates.lon) {
+        return <div>Loading map...</div>;
+    }
     return (
         <>
          <div className="relative " style={{ height: '100vh', width: '100%' } }>
-            <MapContainer center={userLocation} zoom={9} style={{ height: '100vh', width: '100%' }} zoomControl={false}>
+         <MapContainer
+            center={[coordinates.lat, coordinates.lon]}
+            zoom={zoom}
+            style={{ height: '100vh', width: '100%' }}
+            whenCreated={(map) => {
+                mapRef.current = map; // Ensure mapRef is set to the map instance
+                map.on('moveend', handleMapMove);
+            }}
+        >
                 <LayersControl position="topright">
                     <BaseLayer checked name="OpenStreetMap">
                     <TileLayer
@@ -59,10 +97,8 @@ const Map = () => {
                     />
                     </BaseLayer>
 
-                    <Marker position={userLocation}>
-                    <Popup>
-                        You are Here
-                    </Popup>
+                    <Marker position={[coordinates.lat,coordinates.lon]}>
+                        <Popup>You are Here</Popup>
                     </Marker>
                 </LayersControl>
                 
